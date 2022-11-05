@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { MatSnackBar } from '@angular/material/snack-bar';
-import Peer from 'peerjs';
+import {Peer, MediaConnection, PeerJSOption} from 'peerjs';
 import { BehaviorSubject, Subject } from 'rxjs';
 import { v4 as uuidv4 } from 'uuid';
 
@@ -9,8 +9,8 @@ import { v4 as uuidv4 } from 'uuid';
 export class CallService {
 
     private peer: Peer;
-    private mediaCall: Peer.MediaConnection;
-  
+    private mediaCall: MediaConnection;
+
     private localStreamBs: BehaviorSubject<MediaStream> = new BehaviorSubject(null);
     public localStream$ = this.localStreamBs.asObservable();
     private remoteStreamBs: BehaviorSubject<MediaStream> = new BehaviorSubject(null);
@@ -21,9 +21,9 @@ export class CallService {
 
     constructor(private snackBar: MatSnackBar) { }
 
-    public initPeer(): string {
+    public initPeer() {
         if (!this.peer || this.peer.disconnected) {
-            const peerJsOptions: Peer.PeerJSOption = {
+            const peerJsOptions: PeerJSOption = {
                 debug: 3,
                 config: {
                     iceServers: [
@@ -52,7 +52,7 @@ export class CallService {
             const connection = this.peer.connect(remotePeerId);
             connection.on('error', err => {
                 console.error(err);
-                this.snackBar.open(err, 'Close');
+                this.snackBar.open('Close');
             });
 
             this.mediaCall = this.peer.call(remotePeerId, stream);
@@ -69,7 +69,7 @@ export class CallService {
                     this.remoteStreamBs.next(remoteStream);
                 });
             this.mediaCall.on('error', err => {
-                this.snackBar.open(err, 'Close');
+                this.snackBar.open('Close');
                 console.error(err);
                 this.isCallStartedBs.next(false);
             });
@@ -87,26 +87,26 @@ export class CallService {
             const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
             this.localStreamBs.next(stream);
             this.peer.on('call', async (call) => {
-    
+
                 this.mediaCall = call;
                 this.isCallStartedBs.next(true);
-    
+
                 this.mediaCall.answer(stream);
                 this.mediaCall.on('stream', (remoteStream) => {
                     this.remoteStreamBs.next(remoteStream);
                 });
                 this.mediaCall.on('error', err => {
-                    this.snackBar.open(err, 'Close');
+                    this.snackBar.open('Close');
                     this.isCallStartedBs.next(false);
                     console.error(err);
                 });
                 this.mediaCall.on('close', () => this.onCallClose());
-            });            
+            });
         }
         catch (ex) {
             console.error(ex);
             this.snackBar.open(ex, 'Close');
-            this.isCallStartedBs.next(false);            
+            this.isCallStartedBs.next(false);
         }
     }
 
