@@ -21,7 +21,13 @@ export class AppComponent implements OnInit, OnDestroy {
     this.isCallStarted$ = this.callService.isCallStarted$;
     this.peerId = this.callService.initPeer();
   }
-  
+
+
+  get isRemoteConnected() {
+    return this.remoteVideo && this.remoteVideo.nativeElement && this.remoteVideo.nativeElement.paused === false ? true : false;
+  }
+
+
   ngOnInit(): void {
     this.callService.localStream$
       .pipe(filter(res => !!res))
@@ -30,7 +36,7 @@ export class AppComponent implements OnInit, OnDestroy {
       .pipe(filter(res => !!res))
       .subscribe(stream => this.remoteVideo.nativeElement.srcObject = stream)
   }
-  
+
   ngOnDestroy(): void {
     this.callService.destroyPeer();
   }
@@ -44,7 +50,7 @@ export class AppComponent implements OnInit, OnDestroy {
 
     dialogRef.afterClosed()
       .pipe(
-        switchMap(peerId => 
+        switchMap(peerId =>
           joinCall ? of(this.callService.establishMediaCall(peerId)) : of(this.callService.enableCallAnswer())
         ),
       )
